@@ -1,0 +1,29 @@
+@host = http://localhost:5161
+@token = PASTE_JWT_HERE
+
+###
+GET {{host}}/api/product
+
+###
+GET {{host}}/api/product
+X-Api-Key: WrongKey
+
+###
+GET {{host}}/api/product
+X-Api-Key: SecretKey123
+
+###
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "student",
+  "password": "12345"
+}
+
+###
+GET {{host}}/api/product/secure
+
+###
+GET {{host}}/api/product/secure
+Authorization: Bearer {{token}}

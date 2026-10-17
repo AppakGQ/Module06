@@ -1,0 +1,123 @@
+=== [1] Получение JWT-токена: POST /api/auth/login
+> POST http://localhost:5063/api/auth/login
+> Content-Type: application/json
+> {"username": "student", "password": "12345"}
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsImp0aSI6ImY0ZWNmZTRmLTk2MGItNDg4NC1iZWY0LTY1MzE0M2M5ZmQ5MSIsImV4cCI6MTc5MjI2NjI1NywiaXNzIjoiUHJvZHVjdHNBcGkiLCJhdWQiOiJQcm9kdWN0c0FwaUNsaWVudHMifQ.a3rxI7S_ZU7SecDb1JBWX61F-tf5-7T2-U2EyZp-VVY",
+  "expiresAtUtc": "2026-10-17T19:44:17.9184745Z"
+}
+
+=== [2] GET /api/products без авторизации -> 200
+> GET http://localhost:5063/api/products
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+[
+  {
+    "id": 1,
+    "name": "Ноутбук",
+    "price": 450000,
+    "category": "Электроника"
+  },
+  {
+    "id": 2,
+    "name": "Смартфон",
+    "price": 250000,
+    "category": "Электроника"
+  },
+  {
+    "id": 3,
+    "name": "Рюкзак",
+    "price": 20000,
+    "category": "Аксессуары"
+  }
+]
+
+=== [3] GET /api/products/1 без авторизации -> 200
+> GET http://localhost:5063/api/products/1
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "id": 1,
+  "name": "Ноутбук",
+  "price": 450000,
+  "category": "Электроника"
+}
+
+=== [4] Вызов защищённого API без токена: POST /api/products -> 401
+> POST http://localhost:5063/api/products
+> Content-Type: application/json
+> {"name": "Монитор", "price": 120000, "category": "Электроника"}
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer
+
+
+=== [5] Вызов с Authorization: Bearer <token> - успешное добавление товара (Claim name в ответе)
+> POST http://localhost:5063/api/products
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsImp0aSI6ImY0ZWNmZTRmLTk2MGItNDg4NC1iZWY0LTY1MzE0M2M5ZmQ5MSIsImV4cCI6MTc5MjI2NjI1NywiaXNzIjoiUHJvZHVjdHNBcGkiLCJhdWQiOiJQcm9kdWN0c0FwaUNsaWVudHMifQ.a3rxI7S_ZU7SecDb1JBWX61F-tf5-7T2-U2EyZp-VVY
+> Content-Type: application/json
+> {"name": "Монитор", "price": 120000, "category": "Электроника"}
+< HTTP 201  (ожидалось 201: OK)
+< Content-Type: application/json; charset=utf-8
+< Location: http://localhost:5063/api/Products/4
+{
+  "message": "Product created",
+  "createdBy": "student",
+  "product": {
+    "id": 4,
+    "name": "Монитор",
+    "price": 120000,
+    "category": "Электроника"
+  }
+}
+
+=== [6] GET /api/products/4 - добавленный товар доступен
+> GET http://localhost:5063/api/products/4
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "id": 4,
+  "name": "Монитор",
+  "price": 120000,
+  "category": "Электроника"
+}
+
+=== [7] DELETE /api/products/4 без токена -> 401
+> DELETE http://localhost:5063/api/products/4
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer
+
+
+=== [8] DELETE /api/products/4 с токеном -> 204 No Content
+> DELETE http://localhost:5063/api/products/4
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsImp0aSI6ImY0ZWNmZTRmLTk2MGItNDg4NC1iZWY0LTY1MzE0M2M5ZmQ5MSIsImV4cCI6MTc5MjI2NjI1NywiaXNzIjoiUHJvZHVjdHNBcGkiLCJhdWQiOiJQcm9kdWN0c0FwaUNsaWVudHMifQ.a3rxI7S_ZU7SecDb1JBWX61F-tf5-7T2-U2EyZp-VVY
+< HTTP 204  (ожидалось 204: OK)
+
+
+=== [9] Неправильный токен: изменённый JWT -> 401
+> POST http://localhost:5063/api/products
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJqdGkiOiJmNGVjZmU0Zi05NjBiLTQ4ODQtYmVmNC02NTMxNDNjOWZkOTEiLCJleHAiOjE3OTIyNjYyNTcsImlzcyI6IlByb2R1Y3RzQXBpIiwiYXVkIjoiUHJvZHVjdHNBcGlDbGllbnRzIn0.a3rxI7S_ZU7SecDb1JBWX61F-tf5-7T2-U2EyZp-VVY
+> Content-Type: application/json
+> {"name": "Хак", "price": 1, "category": "x"}
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer error="invalid_token", error_description="The signature key was not found"
+
+
+=== [10] Просроченный токен -> 401
+> POST http://localhost:5063/api/products
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsImp0aSI6ImV4cGlyZWQtZGVtbyIsImV4cCI6MTc5MjI2MTQ1OCwiaXNzIjoiUHJvZHVjdHNBcGkiLCJhdWQiOiJQcm9kdWN0c0FwaUNsaWVudHMifQ.QyzO6u1pSlrZ0sl76U1lyWMoVy8kccsK3WhNzZn_ERc
+> Content-Type: application/json
+> {"name": "Старый", "price": 1, "category": "x"}
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer error="invalid_token", error_description="The token expired at '10/17/2026 18:24:18'"
+
+
+=== [11] Совсем неправильный токен (не JWT) -> 401
+> POST http://localhost:5063/api/products
+> Authorization: Bearer abc.def.ghi
+> Content-Type: application/json
+> {"name": "Мусор", "price": 1, "category": "x"}
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer error="invalid_token"
+

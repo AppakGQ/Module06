@@ -1,0 +1,120 @@
+=== [1] Задание 2. GET /api/product без заголовка X-Api-Key
+> GET http://localhost:5161/api/product
+< HTTP 401  (ожидалось 401: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "message": "API key is missing or invalid"
+}
+
+=== [2] Задание 2. GET /api/product с неверным ключом
+> GET http://localhost:5161/api/product
+> X-Api-Key: WrongKey
+< HTTP 401  (ожидалось 401: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "message": "API key is missing or invalid"
+}
+
+=== [3] Задание 2. GET /api/product с правильным ключом X-Api-Key: SecretKey123
+> GET http://localhost:5161/api/product
+> X-Api-Key: SecretKey123
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+[
+  {
+    "id": 1,
+    "name": "Ноутбук",
+    "price": 450000
+  },
+  {
+    "id": 2,
+    "name": "Смартфон",
+    "price": 250000
+  },
+  {
+    "id": 3,
+    "name": "Наушники",
+    "price": 35000
+  },
+  {
+    "id": 4,
+    "name": "Клавиатура",
+    "price": 18000
+  }
+]
+
+=== [4] Задание 4. POST /api/auth/login с неверным паролем
+> POST http://localhost:5161/api/auth/login
+> Content-Type: application/json
+> {"username": "student", "password": "bad"}
+< HTTP 401  (ожидалось 401: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "message": "Invalid username or password"
+}
+
+=== [5] Задание 4. POST /api/auth/login - получение JWT-токена
+> POST http://localhost:5161/api/auth/login
+> Content-Type: application/json
+> {"username": "student", "password": "12345"}
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsInJvbGUiOiJVc2VyIiwianRpIjoiNDliNDIyMjItMmY3My00NjNhLTg3M2UtYmI3NDE4MzYyYmFjIiwiZXhwIjoxNzkyMjY2ODUzLCJpc3MiOiJQcm9kdWN0QXBpIiwiYXVkIjoiUHJvZHVjdEFwaUNsaWVudHMifQ.GK4eqPzQubDfOSwzNbKKrlcQoxYtBDaJFC--GfqEfWg",
+  "expiresAtUtc": "2026-10-17T19:54:13.3354704Z"
+}
+
+=== [6] Задание 5. GET /api/product/secure ([Authorize]) без JWT
+> GET http://localhost:5161/api/product/secure
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer
+
+
+=== [7] Задания 5-6. GET /api/product/secure с заголовком Authorization: Bearer <token>
+> GET http://localhost:5161/api/product/secure
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsInJvbGUiOiJVc2VyIiwianRpIjoiNDliNDIyMjItMmY3My00NjNhLTg3M2UtYmI3NDE4MzYyYmFjIiwiZXhwIjoxNzkyMjY2ODUzLCJpc3MiOiJQcm9kdWN0QXBpIiwiYXVkIjoiUHJvZHVjdEFwaUNsaWVudHMifQ.GK4eqPzQubDfOSwzNbKKrlcQoxYtBDaJFC--GfqEfWg
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+[
+  {
+    "id": 1,
+    "name": "Ноутбук",
+    "price": 450000
+  },
+  {
+    "id": 2,
+    "name": "Смартфон",
+    "price": 250000
+  },
+  {
+    "id": 3,
+    "name": "Наушники",
+    "price": 35000
+  },
+  {
+    "id": 4,
+    "name": "Клавиатура",
+    "price": 18000
+  }
+]
+
+=== [8] Задание 7. Запрос с изменённым JWT (payload подменён, подпись прежняя)
+> GET http://localhost:5161/api/product/secure
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJqdGkiOiI0OWI0MjIyMi0yZjczLTQ2M2EtODczZS1iYjc0MTgzNjJiYWMiLCJleHAiOjE3OTIyNjY4NTMsImlzcyI6IlByb2R1Y3RBcGkiLCJhdWQiOiJQcm9kdWN0QXBpQ2xpZW50cyJ9.GK4eqPzQubDfOSwzNbKKrlcQoxYtBDaJFC--GfqEfWg
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer error="invalid_token", error_description="The signature key was not found"
+
+
+=== [9] Задание 7. Запрос с истёкшим JWT (exp в прошлом, подпись верная)
+> GET http://localhost:5161/api/product/secure
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsImp0aSI6ImV4cGlyZWQtZGVtbyIsImV4cCI6MTc5MjI2MTQ1MywiaXNzIjoiUHJvZHVjdEFwaSIsImF1ZCI6IlByb2R1Y3RBcGlDbGllbnRzIiwicm9sZSI6IlVzZXIifQ.NHD8pGAc5f9VjeFP3Wkv95wcK1RoFyLr7NEoUNdUDy0
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer error="invalid_token", error_description="The token expired at '10/17/2026 18:24:13'"
+
+
+=== [10] Дополнительно: API-ключ не заменяет JWT на защищённом методе
+> GET http://localhost:5161/api/product/secure
+> X-Api-Key: SecretKey123
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer
+

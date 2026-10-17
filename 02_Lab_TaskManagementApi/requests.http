@@ -1,0 +1,38 @@
+@host = http://localhost:5062
+@token = PASTE_JWT_HERE
+
+###
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "student",
+  "password": "12345"
+}
+
+###
+GET {{host}}/api/tasks
+
+###
+GET {{host}}/api/tasks/1
+
+###
+POST {{host}}/api/tasks
+Content-Type: application/json
+
+{ "title": "Новая задача", "description": "Без токена", "isCompleted": false }
+
+###
+POST {{host}}/api/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "title": "Защитить API", "description": "Через JWT", "isCompleted": false }
+
+###
+DELETE {{host}}/api/tasks/4
+Authorization: Bearer {{token}}
+
+###
+GET {{host}}/api/auth/me
+Authorization: Bearer {{token}}

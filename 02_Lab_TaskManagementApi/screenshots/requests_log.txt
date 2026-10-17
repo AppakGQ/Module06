@@ -1,0 +1,179 @@
+=== [1] Шаг 3-4. POST /api/auth/login - получение JWT (Claims: name, role)
+> POST http://localhost:5062/api/auth/login
+> Content-Type: application/json
+> {"username": "student", "password": "12345"}
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsInJvbGUiOiJVc2VyIiwianRpIjoiOWNjZGQ1NjUtN2RlZi00OTkwLWE5Y2YtNTEwYTc1YzQxMmVhIiwiZXhwIjoxNzkyMjY1OTU1LCJpc3MiOiJUYXNrTWFuYWdlbWVudEFwaSIsImF1ZCI6IlRhc2tNYW5hZ2VtZW50Q2xpZW50cyJ9.RGMWAPF-Gp8kjqQiKr4PnGnrL06qaAGzcqa0VTNIvOg",
+  "expiresAtUtc": "2026-10-17T19:39:15.6082571Z"
+}
+
+=== [2] Шаг 3. POST /api/auth/login с неверными данными -> 401
+> POST http://localhost:5062/api/auth/login
+> Content-Type: application/json
+> {"username": "student", "password": "wrong"}
+< HTTP 401  (ожидалось 401: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "message": "Invalid username or password"
+}
+
+=== [3] Тест 1. GET /api/tasks без токена -> 200 OK
+> GET http://localhost:5062/api/tasks
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+[
+  {
+    "id": 1,
+    "title": "Изучить JWT",
+    "description": "Прочитать лекцию по модулю 06",
+    "isCompleted": true
+  },
+  {
+    "id": 2,
+    "title": "Сделать лабораторную",
+    "description": "Реализовать Task Management API",
+    "isCompleted": false
+  },
+  {
+    "id": 3,
+    "title": "Подготовить скриншоты",
+    "description": "Токен, 401, успешный запрос, Claims",
+    "isCompleted": false
+  }
+]
+
+=== [4] GET /api/tasks/1 без токена -> 200 OK
+> GET http://localhost:5062/api/tasks/1
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "id": 1,
+  "title": "Изучить JWT",
+  "description": "Прочитать лекцию по модулю 06",
+  "isCompleted": true
+}
+
+=== [5] Тест 2. POST /api/tasks без токена -> 401 Unauthorized
+> POST http://localhost:5062/api/tasks
+> Content-Type: application/json
+> {"title": "Новая задача", "description": "Без токена", "isCompleted": false}
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer
+
+
+=== [6] Тест 3. POST /api/tasks с корректным JWT (Authorization: Bearer <token>)
+> POST http://localhost:5062/api/tasks
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsInJvbGUiOiJVc2VyIiwianRpIjoiOWNjZGQ1NjUtN2RlZi00OTkwLWE5Y2YtNTEwYTc1YzQxMmVhIiwiZXhwIjoxNzkyMjY1OTU1LCJpc3MiOiJUYXNrTWFuYWdlbWVudEFwaSIsImF1ZCI6IlRhc2tNYW5hZ2VtZW50Q2xpZW50cyJ9.RGMWAPF-Gp8kjqQiKr4PnGnrL06qaAGzcqa0VTNIvOg
+> Content-Type: application/json
+> {"title": "Защитить API", "description": "Добавлена задача через JWT", "isCompleted": false}
+< HTTP 201  (ожидалось 201: OK)
+< Content-Type: application/json; charset=utf-8
+< Location: http://localhost:5062/api/Tasks/4
+{
+  "message": "Task created",
+  "createdBy": "student",
+  "task": {
+    "id": 4,
+    "title": "Защитить API",
+    "description": "Добавлена задача через JWT",
+    "isCompleted": false
+  }
+}
+
+=== [7] DELETE /api/tasks/4 без токена -> 401
+> DELETE http://localhost:5062/api/tasks/4
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer
+
+
+=== [8] Тест 4. DELETE /api/tasks/4 с корректным JWT
+> DELETE http://localhost:5062/api/tasks/4
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsInJvbGUiOiJVc2VyIiwianRpIjoiOWNjZGQ1NjUtN2RlZi00OTkwLWE5Y2YtNTEwYTc1YzQxMmVhIiwiZXhwIjoxNzkyMjY1OTU1LCJpc3MiOiJUYXNrTWFuYWdlbWVudEFwaSIsImF1ZCI6IlRhc2tNYW5hZ2VtZW50Q2xpZW50cyJ9.RGMWAPF-Gp8kjqQiKr4PnGnrL06qaAGzcqa0VTNIvOg
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "message": "Task deleted",
+  "deletedBy": "student",
+  "id": 4
+}
+
+=== [9] Тест 5. POST /api/tasks с изменённым JWT -> 401
+> POST http://localhost:5062/api/tasks
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJqdGkiOiI5Y2NkZDU2NS03ZGVmLTQ5OTAtYTljZi01MTBhNzVjNDEyZWEiLCJleHAiOjE3OTIyNjU5NTUsImlzcyI6IlRhc2tNYW5hZ2VtZW50QXBpIiwiYXVkIjoiVGFza01hbmFnZW1lbnRDbGllbnRzIn0.RGMWAPF-Gp8kjqQiKr4PnGnrL06qaAGzcqa0VTNIvOg
+> Content-Type: application/json
+> {"title": "Подмена", "description": "x", "isCompleted": false}
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer error="invalid_token", error_description="The signature key was not found"
+
+
+=== [10] Тест 6. POST /api/tasks с истёкшим JWT -> 401
+> POST http://localhost:5062/api/tasks
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsImp0aSI6ImV4cGlyZWQtZGVtbyIsImV4cCI6MTc5MjI2MTQ1NSwiaXNzIjoiVGFza01hbmFnZW1lbnRBcGkiLCJhdWQiOiJUYXNrTWFuYWdlbWVudENsaWVudHMiLCJyb2xlIjoiVXNlciJ9.vAODQwPVhQ6rQUThJhidnartrTmGM41N2lzQFol-op4
+> Content-Type: application/json
+> {"title": "Просрочен", "description": "x", "isCompleted": false}
+< HTTP 401  (ожидалось 401: OK)
+< WWW-Authenticate: Bearer error="invalid_token", error_description="The token expired at '10/17/2026 18:24:15'"
+
+
+=== [11] Шаг 7. GET /api/auth/me - содержимое Claims из HttpContext.User.Claims
+> GET http://localhost:5062/api/auth/me
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoic3R1ZGVudCIsInJvbGUiOiJVc2VyIiwianRpIjoiOWNjZGQ1NjUtN2RlZi00OTkwLWE5Y2YtNTEwYTc1YzQxMmVhIiwiZXhwIjoxNzkyMjY1OTU1LCJpc3MiOiJUYXNrTWFuYWdlbWVudEFwaSIsImF1ZCI6IlRhc2tNYW5hZ2VtZW50Q2xpZW50cyJ9.RGMWAPF-Gp8kjqQiKr4PnGnrL06qaAGzcqa0VTNIvOg
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+{
+  "isAuthenticated": true,
+  "name": "student",
+  "claims": [
+    {
+      "type": "name",
+      "value": "student"
+    },
+    {
+      "type": "role",
+      "value": "User"
+    },
+    {
+      "type": "jti",
+      "value": "9ccdd565-7def-4990-a9cf-510a75c412ea"
+    },
+    {
+      "type": "exp",
+      "value": "1792265955"
+    },
+    {
+      "type": "iss",
+      "value": "TaskManagementApi"
+    },
+    {
+      "type": "aud",
+      "value": "TaskManagementClients"
+    }
+  ]
+}
+
+=== [12] GET /api/tasks после POST и DELETE (состояние в итоге как в начале)
+> GET http://localhost:5062/api/tasks
+< HTTP 200  (ожидалось 200: OK)
+< Content-Type: application/json; charset=utf-8
+[
+  {
+    "id": 1,
+    "title": "Изучить JWT",
+    "description": "Прочитать лекцию по модулю 06",
+    "isCompleted": true
+  },
+  {
+    "id": 2,
+    "title": "Сделать лабораторную",
+    "description": "Реализовать Task Management API",
+    "isCompleted": false
+  },
+  {
+    "id": 3,
+    "title": "Подготовить скриншоты",
+    "description": "Токен, 401, успешный запрос, Claims",
+    "isCompleted": false
+  }
+]
